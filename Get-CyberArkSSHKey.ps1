@@ -1,21 +1,20 @@
 <#
 .SYNOPSIS
-    Retrieves an SSH private key from a CyberArk Vault using the REST API and optionally converts it to PPK format.
+    Retrieves an SSH private key from a CyberArk Vault using the REST API.
 
 .DESCRIPTION
     The script follows these steps:
     1. Authenticates to the CyberArk API using the current Windows user's credentials.
     2. If MFA is required, it prompts the user for a one-time password.
     3. Searches for a target account's ID based on its safe and properties.
-    4. Retrieves the SSH private key (in PEM format) for the found account.
-    5. Saves the key to a local PEM file.
-    6. If enabled, it uses puttygen.exe to convert the PEM key to PPK format.
-    7. Logs out of the API session.
+    4. Retrieves the SSH private key for the found account.
+    5. Saves the key to a local file.
+    6. Logs out of the API session.
 
 .NOTES
     Author: AI Generated Example
-    Version: 1.1
-    Requires: PowerShell 5.1 or later. For PPK conversion, PuTTY (puttygen.exe) must be installed.
+    Version: 1.2 (Simple)
+    Requires: PowerShell 5.1 or later.
 #>
 
 # =================================================================================
@@ -32,24 +31,11 @@ $safeName = "Your-Target-SafeName"
 $accountAddress = "target.server.address" # e.g., IP address or FQDN
 $accountUsername = "ssh_username"          # e.g., root, ec2-user
 
-# The local file path where the retrieved PEM SSH key will be saved
-$sshKeyOutputPathPEM = "C:\Temp\id_rsa_from_cyberark.pem"
+# The local file path where the retrieved SSH key will be saved
+$sshKeyOutputPath = "C:\Temp\id_rsa_from_cyberark.pem"
 
 # The reason for retrieving the credential (often required by CyberArk policy)
 $retrievalReason = "Administrative access for ticket JIRA-1234"
-
-# --- PPK Conversion Settings ---
-
-# Set to $true to automatically convert the PEM key to PPK format
-$convertToPPK = $true
-
-# Full path to puttygen.exe. This is required if $convertToPPK is $true.
-# Usually located in "C:\Program Files\PuTTY\puttygen.exe"
-$puttygenPath = "C:\Program Files\PuTTY\puttygen.exe"
-
-# The local file path where the converted PPK key will be saved.
-# This path is generated automatically based on the PEM path.
-$sshKeyOutputPathPPK = $sshKeyOutputPathPEM.Replace(".pem", ".ppk")
 
 # =================================================================================
 # === SCRIPT LOGIC (Usually does not require modification) ===
@@ -96,31 +82,12 @@ try {
     if (-not $sshPrivateKey) { throw "Failed to retrieve the SSH key. The server response was empty." }
     Write-Host "[SUCCESS] SSH key retrieved successfully."
 
-    # Step 5: Save the Key to a PEM File
-    Write-Host "[INFO] Step 5: Saving PEM key to file: $sshKeyOutputPathPEM"
-    $outputDir = Split-Path -Parent -Path $sshKeyOutputPathPEM
+    # Step 5: Save the Key to a File
+    Write-Host "[INFO] Step 5: Saving key to file: $sshKeyOutputPath"
+    $outputDir = Split-Path -Parent -Path $sshKeyOutputPath
     if (-not (Test-Path -Path $outputDir)) { New-Item -ItemType Directory -Path $outputDir | Out-Null }
-    $sshPrivateKey | Out-File -FilePath $sshKeyOutputPathPEM -Encoding ascii
-    Write-Host "[SUCCESS] PEM key saved."
-
-    # Step 6: Convert PEM to PPK (if enabled)
-    if ($convertToPPK) {
-        Write-Host "[INFO] Step 6: Converting PEM key to PPK format..."
-        if (-not (Test-Path -Path $puttygenPath)) {
-            throw "PuTTYgen not found at the specified path: $puttygenPath. Cannot convert key."
-        }
-        
-        # Command line arguments for puttygen to perform a non-interactive conversion
-        $puttygenArgs = "'$sshKeyOutputPathPEM' -o '$sshKeyOutputPathPPK' --new-passphrase ''"
-        
-        Start-Process -FilePath $puttygenPath -ArgumentList $puttygenArgs -Wait -NoNewWindow
-        
-        if (Test-Path -Path $sshKeyOutputPathPPK) {
-            Write-Host "[SUCCESS] Key successfully converted and saved to: $sshKeyOutputPathPPK"
-        } else {
-            throw "Failed to convert the key to PPK format. Check PuTTYgen logs or permissions."
-        }
-    }
+    $sshPrivateKey | Out-File -FilePath $sshKeyOutputPath -Encoding ascii
+    Write-Host "[SUCCESS] Key saved to $sshKeyOutputPath"
 
     Write-Host "[COMPLETE] Operation finished."
 
@@ -133,9 +100,9 @@ try {
         Write-Error "Server Response: $errorBody"
     }
 } finally {
-    # Step 7: Logoff
+    # Step 6: Logoff
     if ($sessionToken) {
-        Write-Host "[INFO] Step 7: Logging off API session..."
+        Write-Host "[INFO] Step 6: Logging off API session..."
         $logoffURI = "$baseURI/api/auth/Logoff"
         try {
             Invoke-RestMethod -Method Post -Uri $logoffURI -Headers $authHeader | Out-Null

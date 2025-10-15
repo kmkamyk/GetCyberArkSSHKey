@@ -6,14 +6,15 @@ A PowerShell script to securely fetch an SSH private key from a CyberArk Vault u
 
 This script automates the process of retrieving SSH private keys stored in the CyberArk Privileged Access Management (PAM) solution. It is designed to be run by a user on a domain-joined Windows machine, using their current Windows session for the initial authentication step.
 
+The script retrieves the key in its original format (typically PEM) and saves it to a local file.
+
 ## Features
 
 -   **Windows Integrated Authentication**: Leverages the current user's Windows credentials for the initial login to CyberArk (SSO).
 -   **MFA/2FA Support**: Prompts the user to enter a one-time password (OTP) to complete the multi-factor authentication process.
 -   **Account Discovery**: Searches for the target account within a specified safe using properties like username and address.
 -   **Secure Retrieval**: Downloads the SSH private key associated with the account.
--   **File Output**: Saves the retrieved key to a local `.pem` file.
--   **Secure File Permissions**: (Optional) Attempts to set file permissions on the created key file to restrict access to the current user only.
+-   **File Output**: Saves the retrieved key to a local file.
 -   **Automatic Session Logout**: Ensures the API session is properly terminated after the operation is complete or if an error occurs.
 
 ## Prerequisites
@@ -44,7 +45,6 @@ $baseURI = "https://cyberark.yourdomain.com/PasswordVault"
 $safeName = "Your-Target-SafeName"
 
 # Properties to uniquely identify the target account
-# Use a combination that best fits your account configuration
 $accountAddress = "target.server.address" # e.g., IP address or FQDN
 $accountUsername = "ssh_username"          # e.g., root, ec2-user
 
@@ -52,7 +52,7 @@ $accountUsername = "ssh_username"          # e.g., root, ec2-user
 $sshKeyOutputPath = "C:\Temp\id_rsa_from_cyberark.pem"
 
 # The reason for retrieving the credential (often required by CyberArk policy)
-$retrievalReason = "Administrative access for ticket JIRA-1234"```
+$retrievalReason = "Administrative access for ticket JIRA-1234"
 
 ## Usage
 
