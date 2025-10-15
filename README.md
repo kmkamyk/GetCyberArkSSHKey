@@ -53,7 +53,7 @@ $sshKeyOutputPath = "C:\Temp\id_rsa_from_cyberark.pem"
 
 # The reason for retrieving the credential (often required by CyberArk policy)
 $retrievalReason = "Administrative access for ticket JIRA-1234"
-
+```
 ## Usage
 
 1.  Clone this repository or download the `Get-CyberArkSSHKey.ps1` script.
